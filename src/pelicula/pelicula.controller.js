@@ -1,18 +1,25 @@
 import { ObjectId } from 'mongodb';
 import { conectarDB } from '../common/db.js';
+import { PeliculaSchema } from './pelicula.js';
 
 const db = await conectarDB();
 const peliculaCollection = db.collection("peliculas");
 
 export async function handleInsertPeliculaRequest(req, res) {
-    const nuevaPelicula = req.body;
-    peliculaCollection.insertOne(nuevaPelicula)
-        .then(result => {
-            res.status(201).json({ mensaje: "Película agregada", id: result.insertedId });
-        })
-        .catch(error => {
-            res.status(500).json({ error: "Error genérico al agregar película", detalle: error.message });
-        });
+    try {
+        // Se aplica el schema con tipado correcto según la pauta
+        const nuevaPelicula = PeliculaSchema(req.body);
+
+        peliculaCollection.insertOne(nuevaPelicula)
+            .then(result => {
+                res.status(201).json({ mensaje: "Película agregada", id: result.insertedId });
+            })
+            .catch(error => {
+                res.status(500).json({ error: "Error genérico al agregar película", detalle: error.message });
+            });
+    } catch (error) {
+        res.status(400).json({ error: "Datos de película inválidos", detalle: error.message });
+    }
 }
 
 export async function handleGetPeliculasRequest(req, res) {

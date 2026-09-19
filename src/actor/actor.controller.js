@@ -1,22 +1,31 @@
 import { ObjectId } from 'mongodb';
 import { conectarDB } from '../common/db.js';
+import { ActorSchema } from './actor.js';
 
 const db = await conectarDB();
 const actorCollection = db.collection("actores");
 const peliculaCollection = db.collection("peliculas");
 
 export async function handleInsertActorRequest(req, res) {
-    const nuevoActor = req.body;
-    
-    peliculaCollection.findOne({ nombre: nuevoActor.idPelicula })
+    // Se toma el nombre de la película enviado en el body (o en idPelicula si mandan el nombre ahí)
+    const nombreBuscado = req.body.nombrePelicula || req.body.idPelicula;
+
+    peliculaCollection.findOne({ nombre: nombreBuscado })
         .then(peliculaEncontrada => {
             if (!peliculaEncontrada) {
                 return res.status(404).json({ error: "La película especificada no existe en la colección" });
             }
-            return actorCollection.insertOne(nuevoActor);
+
+            // Se construye el actor con el schema y se le asigna el _id real de la película encontrada
+            const actorTipado = ActorSchema({
+                ...req.body,
+                idPelicula: peliculaEncontrada._id.toString()
+            });
+
+            return actorCollection.insertOne(actorTipado);
         })
         .then(result => {
-            if (!res.headersSent) {
+            if (result && !res.headersSent) {
                 res.status(201).json({ mensaje: "Actor agregado con éxito", id: result.insertedId });
             }
         })
@@ -37,10 +46,7 @@ export async function handleGetActoresRequest(req, res) {
         });
 }
 
-export async function handleGetActorByIdRequest(req, res, next) {
-    if (!ObjectId.isValid(req.params.id)) {
-        return next();
-    }
+export async function handleGetActorByIdRequest(req, res) {
     try {
         const id = new ObjectId(req.params.id);
         actorCollection.findOne({ _id: id })
@@ -60,6 +66,7 @@ export async function handleGetActorByIdRequest(req, res, next) {
 
 export async function handleGetActoresByPeliculaIdRequest(req, res) {
     const peliculaId = req.params.pelicula;
+    
     actorCollection.find({ idPelicula: peliculaId }).toArray()
         .then(actores => {
             res.status(200).json(actores);

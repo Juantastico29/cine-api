@@ -1,10 +1,12 @@
 import { ObjectId } from 'mongodb';
 
-export const ActorSchema = {
-    _id: ObjectId,
-    idPelicula: "string",
-    nombre: "string",
-    edad: "int",
-    estaRetirado: "bool",
-    premios: "array"
+export const ActorSchema = (data = {}) => {
+  return {
+    _id: data._id ? new ObjectId(data._id) : new ObjectId(),
+    idPelicula: String(data.idPelicula || ''),
+    nombre: String(data.nombre || '').trim(),
+    edad: parseInt(data.edad, 10),
+    estaRetirado: Boolean(data.estaRetirado),
+    premios: Array.isArray(data.premios) ? data.premios : []
+  };
 };
