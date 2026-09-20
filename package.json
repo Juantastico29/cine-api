@@ -4,7 +4,7 @@
   "description": "API REST para administración de películas favoritas de trabajadores y colaboradores en Iplacex",
   "main": "server.js",
   "scripts": {
-    "start": "node --watch server.js"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "Iplacex - Juan Felipe Mendoza Padilla",
